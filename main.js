@@ -7,7 +7,7 @@ import { Scene,
     PerspectiveCamera, OrthographicCamera,
     DirectionalLight, AmbientLight, DoubleSide,
     LinearSRGBColorSpace, SRGBColorSpace, RGBAFormat, FloatType,
-    WebGLRenderer, WebGLRenderTarget, TextureLoader, RepeatWrapping,
+    WebGLRenderer, WebGLRenderTarget, WebGLCubeRenderTarget, TextureLoader, RepeatWrapping,
     EquirectangularReflectionMapping, CubeReflectionMapping,
     UniformsUtils, UniformsLib, ShaderLib,
     PCFSoftShadowMap, CameraHelper  } from 'three';
@@ -206,6 +206,7 @@ var materialDefines;
 var directionalLight, ambientLight;
 var camera_initialized = false;
 var env_map_texture = null;
+var env_cube_render_target = null;
 
 var MESH_SURFACE;
 var MESH_PROPS;
@@ -738,19 +739,21 @@ function init()
 function load_geometry(scene_name)
 {
     scene.background = env_map_texture;
+    // GLSL envMap is samplerCube: never bind the 2D equirectangular texture as a cube sampler.
+    const cubeEnvMap = env_cube_render_target.texture;
     env_map_texture.mapping = EquirectangularReflectionMapping ;
     env_map_texture.colorSpace = SRGBColorSpace;
     if (!PATHTRACING)
     {
-        neutralMaterial.envMap                = env_map_texture;
-        neutralMaterial.uniforms.envMap.value = env_map_texture;
-        openpbrMaterial.envMap                = env_map_texture;
-        openpbrMaterial.uniforms.envMap.value = env_map_texture;
+        neutralMaterial.envMap                = cubeEnvMap;
+        neutralMaterial.uniforms.envMap.value = cubeEnvMap;
+        openpbrMaterial.envMap                = cubeEnvMap;
+        openpbrMaterial.uniforms.envMap.value = cubeEnvMap;
     }
     else
     {
-        pathtracedMaterial.envMap                = env_map_texture;
-        pathtracedMaterial.uniforms.envMap.value = env_map_texture;
+        pathtracedMaterial.envMap                = cubeEnvMap;
+        pathtracedMaterial.uniforms.envMap.value = cubeEnvMap;
     }
 
     // Load "neutral" objects (i.e. Lambert shaded background stuff)
@@ -898,11 +901,17 @@ function load_scene(scene_name)
     if (!env_map_texture)
     {
         const textureLoader = new TextureLoader();
-        let env_map_path = 'textures/envmaps/etzwihl_16k.jpg';
+        let env_map_path = 'textures/envmaps/etzwihl_1536.jpg';
         let textureEquirec = textureLoader.load(env_map_path,
             function (texture) {
                 console.log('-> loaded env map: ', env_map_path);
                     env_map_texture = texture;
+                    env_map_texture.mapping = EquirectangularReflectionMapping;
+                    env_map_texture.colorSpace = SRGBColorSpace;
+                    if (env_cube_render_target) env_cube_render_target.dispose();
+                    env_cube_render_target = new WebGLCubeRenderTarget(512, { generateMipmaps: true });
+                    env_cube_render_target.fromEquirectangularTexture(renderer, env_map_texture);
+                    env_cube_render_target.texture.mapping = CubeReflectionMapping;
                     load_geometry(scene_name);
                 }
         );
