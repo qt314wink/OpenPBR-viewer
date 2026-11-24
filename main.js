@@ -24,7 +24,7 @@ shaderStructs, shaderIntersectFunction, SAH, StaticGeometryGenerator
 } from 'three-mesh-bvh';
 
 import { GUI } from 'lil-gui';
-import { setupMaterialPresets } from './material-presets.mjs';
+import { setupMaterialPresets, flushPendingMaterialPreset } from './material-presets.mjs';
 import './material-presets.css';
 
 import glsl_pathtracing_main            from './glsl/pathtracing/main.glsl?raw'
@@ -217,6 +217,7 @@ var progress_finished_timer;
 
 var LOADED;
 var COMPILING;
+var recompilePending = false;
 var PATHTRACING;
 var samples = 0;
 
@@ -729,6 +730,8 @@ function init()
 
     mesh_loader = new MeshLoader();
 
+    // Presets are available immediately while meshes and shaders load.
+    setupMaterialPresets(params, null, resetSamples, () => LOADED && !COMPILING);
     load_scene(params.scene_name);
 }
 
@@ -1077,7 +1080,7 @@ function setup_gui()
 
     gui.add( params, 'reset_camera' );
     gui.open();
-    setupMaterialPresets(params, gui, resetSamples);
+    setupMaterialPresets(params, gui, resetSamples, () => LOADED && !COMPILING);
 }
 
 function post_load_setup()
@@ -1202,6 +1205,12 @@ function finishCompilationProgress()
     progress_bar.set(1.0);
     progress_finished_timer = performance.now();
     COMPILING = false;
+    if (recompilePending) {
+        recompilePending = false;
+        load_scene(params.scene_name);
+        return;
+    }
+    flushPendingMaterialPreset();
 }
 
 function resize()
@@ -1236,8 +1245,12 @@ function resetSamples()
     reload = reload || (materialDefines.RETRO_ENABLED        != retro_enabled());
     if (reload)
     {
-        // load_scene recompiles when geometry finishes loading.
-        // Do not compile an unfinished scene a second time here.
+        // Wait for the active asynchronous compilation before replacing shaders.
+        // Disposing a material while compileAsync polls it can leave currentProgram undefined.
+        if (COMPILING || !LOADED) {
+            recompilePending = true;
+            return;
+        }
         load_scene(params.scene_name);
     }
 }

@@ -70,10 +70,13 @@ let hasInitialized = false;
 let currentGui;
 let currentParams;
 let currentResetSamples;
+let readyCheck = () => true;
+let pendingApply = false;
 
-export function setupMaterialPresets(params, gui, resetSamples) {
+export function setupMaterialPresets(params, gui, resetSamples, isReady = () => true) {
   if (!defaultSnapshot) defaultSnapshot = captureMaterialDefaults(params);
-  currentGui = gui;
+  if (gui) currentGui = gui;
+  readyCheck = isReady;
   currentParams = params;
   currentResetSamples = resetSamples;
   if (!dock) {
@@ -103,19 +106,22 @@ export function setupMaterialPresets(params, gui, resetSamples) {
         const selected = button.dataset.preset;
         if (!applyMaterialPreset(currentParams, defaultSnapshot, selected)) return;
         activeId = selected;
-        currentGui.controllersRecursive().forEach(c => c.updateDisplay());
-        renderPresetState();
+        const ready = Boolean(currentGui) && readyCheck();
+        if (ready) currentGui.controllersRecursive().forEach(c => c.updateDisplay());
         const url = new URL(window.location.href);
         url.searchParams.set('preset', selected);
         window.history.replaceState(null, '', url);
-        currentResetSamples();
+        if (ready) currentResetSamples();
+        else pendingApply = true;
+        renderPresetState();
       });
     });
   }
   // Global GUI events denote manual edits; display refreshes do not fire them.
-  gui.onChange(() => {
+  if (gui) gui.onChange(() => {
     if (activeId !== null) {
       activeId = null;
+      pendingApply = false;
       const url = new URL(window.location.href);
       url.searchParams.delete('preset');
       window.history.replaceState(null, '', url);
@@ -128,12 +134,23 @@ export function setupMaterialPresets(params, gui, resetSamples) {
     if (MATERIAL_PRESETS.some(p => p.id === initial)) {
       applyMaterialPreset(params, defaultSnapshot, initial);
       activeId = initial;
-      gui.controllersRecursive().forEach(c => c.updateDisplay());
-      resetSamples();
+      if (gui) {
+        gui.controllersRecursive().forEach(c => c.updateDisplay());
+        resetSamples();
+      }
     }
   }
-  if (window.matchMedia('(max-width: 700px)').matches) gui.close();
+  if (gui && window.matchMedia('(max-width: 700px)').matches) gui.close();
+  flushPendingMaterialPreset();
   renderPresetState();
+}
+
+export function flushPendingMaterialPreset() {
+  if (!pendingApply || !currentGui || !readyCheck()) return;
+  pendingApply = false;
+  currentGui.controllersRecursive().forEach(c => c.updateDisplay());
+  renderPresetState();
+  currentResetSamples();
 }
 
 function renderPresetState() {
@@ -146,4 +163,5 @@ function renderPresetState() {
   if (status) status.textContent = chosen
     ? 'Active: ' + chosen.name + ' · ' + chosen.subtitle
     : 'Custom material · select a preset to restore a recipe';
+  if (status && pendingApply) status.textContent += ' · queued while scene loads';
 }
