@@ -22,7 +22,8 @@
     "deploy": "gh-pages -d dist",
     "build": "vite build",
     "preview": "vite preview --port 8080",
-    "test": "node --test material-presets.test.mjs"
+    "test": "node --test material-presets.test.mjs scripts/visual-qa-utils.test.mjs",
+    "qa:materials": "node scripts/capture-materials.mjs"
   },
   "author": "portsmouth",
   "license": "ISC"

@@ -19,3 +19,27 @@ Headless comparison with a 3840×1920 intermediate showed Iridescent compilation
 6. Only after human visual acceptance should captures be promoted to public thumbnails or case-study video.
 
 Use `npm test && npm run build`. On a GPU-capable workstation, install Playwright with `npm install --no-save playwright && npx playwright install chromium`; run `node scripts/capture-materials.mjs`. The script generates images and an `acceptance.json` receipt. Captures remain **visual-review pending** until inspected.
+
+## Hardware acceptance gate — Windows PowerShell
+
+The capture runner now refuses to accept software WebGL as hardware evidence. It records the WebGL adapter, exact local commit, environment-map hash, console warnings, selected preset, screenshot hashes, pixel contrast, cross-preset image difference, and a session video. It **never automatically marks a capture visually accepted**.
+
+On your Windows workstation, using a hardware-accelerated Chrome browser:
+
+```powershell
+git clone https://github.com/qt314wink/OpenPBR-viewer.git
+cd OpenPBR-viewer
+git fetch origin qa/openpbr-material-capture
+git switch --track origin/qa/openpbr-material-capture
+npm ci
+npm install --no-save --package-lock=false playwright
+npx playwright install chromium
+$env:OPENPBR_CHROME_CHANNEL = "chrome"
+$env:OPENPBR_URL = "https://openpbr-viewer-demo-git-qa-openpbr-material-c2feb8-melodicbloom.vercel.app/"
+$env:OPENPBR_EXPECT_SHA = (git rev-parse HEAD).Trim()
+npm run qa:materials
+```
+
+Review the resulting `artifacts/material-captures/acceptance.json`, three PNGs, and `material-session.webm`. A nonzero exit indicates a blocked or rejected automated gate. An automated `REVIEW_REQUIRED` result is **not** human visual approval. Inspect color, reflections, object silhouette, refraction, frame freshness, and repeatability on desktop and mobile. Keep PR #1 draft until these checks pass.
+
+The cloud QA environment was tested with Chromium 159 and reported `ANGLE (SwiftShader Device)` instead of a hardware adapter. It correctly returned `BLOCKED_NO_VERIFIED_HARDWARE_GPU` and produced no accepted captures. Do not bypass this flag for publication. `OPENPBR_ALLOW_SOFTWARE=1` is diagnostic only and will label its output `SOFTWARE_ONLY_NOT_ACCEPTED`.
