@@ -24,6 +24,8 @@ shaderStructs, shaderIntersectFunction, SAH, StaticGeometryGenerator
 } from 'three-mesh-bvh';
 
 import { GUI } from 'lil-gui';
+import { setupMaterialPresets } from './material-presets.mjs';
+import './material-presets.css';
 
 import glsl_pathtracing_main            from './glsl/pathtracing/main.glsl?raw'
 import glsl_pathtracing_fuzz_brdf       from './glsl/pathtracing/fuzz_brdf.glsl?raw'
@@ -1075,6 +1077,7 @@ function setup_gui()
 
     gui.add( params, 'reset_camera' );
     gui.open();
+    setupMaterialPresets(params, gui, resetSamples);
 }
 
 function post_load_setup()
@@ -1233,8 +1236,9 @@ function resetSamples()
     reload = reload || (materialDefines.RETRO_ENABLED        != retro_enabled());
     if (reload)
     {
+        // load_scene recompiles when geometry finishes loading.
+        // Do not compile an unfinished scene a second time here.
         load_scene(params.scene_name);
-        trigger_recompile();
     }
 }
 

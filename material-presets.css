@@ -1,0 +1,61 @@
+#material-preset-dock {
+  box-sizing: border-box; position: fixed; z-index: 12;
+  top: 68px; left: 16px; width: 268px; max-width: calc(100vw - 32px);
+  padding: 14px; border: 1px solid rgba(157,204,220,.33); border-radius: 18px;
+  background: rgba(8,16,25,.87); color: #eaf4f8; backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px rgba(0,0,0,.27); font: 13px/1.4 system-ui,sans-serif;
+}
+#material-preset-dock * { box-sizing: border-box; }
+#material-preset-dock .preset-kicker {
+  font: 10px/1.2 ui-monospace,monospace; letter-spacing:.12em; color:#9ce5e4;
+}
+#material-preset-dock h2 {font-size:18px;line-height:1.2;margin:5px 0 4px;}
+#material-preset-dock p {margin:0;color:#a4bdc8;}
+#material-preset-dock .preset-options {
+  display:grid;grid-template-columns:1fr 1fr;gap:7px;margin:14px 0 10px;
+}
+#material-preset-dock .preset-button {
+  display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;
+  padding:9px;border:1px solid #38505b;border-radius:11px;
+  background:rgba(255,255,255,.035);color:inherit;text-align:left;
+  font:inherit;cursor:pointer;
+  transition:border-color .16s,background .16s,transform .16s;
+}
+#material-preset-dock .preset-button:hover {
+  background:rgba(117,212,222,.13);transform:translateY(-1px);
+}
+#material-preset-dock .preset-button:focus-visible {
+  outline:3px solid #c8fdff;outline-offset:2px;
+}
+#material-preset-dock .preset-button[aria-pressed="true"] {
+  border-color:#83e3ea;background:rgba(76,199,218,.2);
+}
+#material-preset-dock .preset-swatch {
+  display:block;width:24px;height:24px;border-radius:50%;
+  background:radial-gradient(circle at 30% 22%,#fff,var(--preset-color) 44%,#12232c 100%);
+  border:1px solid #ffffff77;box-shadow:0 1px 8px #0006;
+}
+#material-preset-dock .preset-copy {display:grid;gap:2px;}
+#material-preset-dock strong {font-size:12px;font-weight:650;}
+#material-preset-dock small {font-size:10px;color:#a5b9c4;}
+#material-preset-dock .preset-status {font-size:11px;color:#98e1e4;}
+#material-preset-dock .preset-hint {font-size:10px;margin-top:7px;}
+@media (max-width:700px) {
+  #material-preset-dock {
+    top:auto;bottom:max(12px,env(safe-area-inset-bottom));left:12px;
+    width:calc(100vw - 24px);max-width:430px;padding:11px;
+  }
+  #material-preset-dock .preset-head p,
+  #material-preset-dock .preset-hint {display:none;}
+  #material-preset-dock h2 {font-size:15px;}
+  #material-preset-dock .preset-options {
+    grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin:9px 0 6px;
+  }
+  #material-preset-dock .preset-button {padding:7px;gap:4px;min-height:65px;}
+  #material-preset-dock .preset-swatch {width:16px;height:16px;}
+  #material-preset-dock strong {font-size:11px;}
+  #material-preset-dock small {display:none;}
+}
+@media (prefers-reduced-motion:reduce) {
+  #material-preset-dock .preset-button {transition:none;}
+}
