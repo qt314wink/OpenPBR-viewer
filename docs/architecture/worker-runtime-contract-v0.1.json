@@ -1,0 +1,242 @@
+{
+  "title": "OpenPBR Worker Runtime",
+  "id": "openpbr-worker-runtime",
+  "version": "0.1.0",
+  "status": "proposed-spec-only",
+  "baseline": {
+    "repo": "qt314wink/OpenPBR-viewer",
+    "mainCommit": "3ad43ea93c5a45246b610730c60f3b87d3cd7f26",
+    "visualRepairPr": 1,
+    "visualRepairHead": "6ba1becb9203fab2132ab6d69fc8235d3be91af4",
+    "visualRepairAccepted": false
+  },
+  "featureFlags": {
+    "workerRuntimeEnabled": false,
+    "transportPreference": "auto",
+    "backend": "webgl2",
+    "experimentalWebGpuEnabled": false
+  },
+  "modes": [
+    {
+      "id": "M0",
+      "name": "main-thread-webgl2",
+      "requires": []
+    },
+    {
+      "id": "M1",
+      "name": "worker-postmessage-webgl2",
+      "requires": [
+        "Worker",
+        "OffscreenCanvas",
+        "HTMLCanvasElement.transferControlToOffscreen",
+        "worker-webgl2"
+      ]
+    },
+    {
+      "id": "M2",
+      "name": "worker-shared-memory-webgl2",
+      "requires": [
+        "M1",
+        "SharedArrayBuffer",
+        "Atomics",
+        "crossOriginIsolated-main",
+        "crossOriginIsolated-worker"
+      ]
+    }
+  ],
+  "capabilities": {
+    "autoFallbackOrder": [
+      "M2",
+      "M1",
+      "M0"
+    ],
+    "replacementCanvasOnWorkerFailure": true,
+    "mainThreadUsesAtomicsWait": false
+  },
+  "parameters": {
+    "targetFpsDesktop": 60,
+    "targetFpsMobile": 30,
+    "devicePixelRatioCap": 1,
+    "workerInitTimeoutMs": 8000,
+    "sceneCompileTimeoutMs": 90000,
+    "commandAckTimeoutMs": 2000,
+    "resizeDebounceMs": 80,
+    "inputCoalesceMs": 16,
+    "maxCoherentReadRetries": 3,
+    "maxContextLossEventsBeforeFallback": 2,
+    "contextLossWindowMs": 60000,
+    "benchmarkWarmupSeconds": 10,
+    "benchmarkDurationSeconds": 30,
+    "benchmarkTrials": 3,
+    "inputAckP95TargetMs": 50,
+    "frameP95MaxRegressionFraction": 0.15,
+    "longTaskThresholdMs": 50
+  },
+  "messages": {
+    "protocol": 1,
+    "commonFields": [
+      "protocol",
+      "generation",
+      "requestId",
+      "revision",
+      "type",
+      "payload"
+    ],
+    "commands": [
+      "INIT",
+      "APPLY_PRESET",
+      "MATERIAL_SNAPSHOT",
+      "CAMERA_INTENT",
+      "RESIZE",
+      "SET_MODE",
+      "PAUSE",
+      "RESUME",
+      "DISPOSE"
+    ],
+    "events": [
+      "CAPABILITIES",
+      "LOADING",
+      "QUEUED",
+      "COMPILE_STARTED",
+      "COMPILE_DONE",
+      "APPLIED",
+      "FRAME_PRESENTED",
+      "METRICS",
+      "CONTEXT_LOST",
+      "ERROR",
+      "DISPOSED"
+    ]
+  },
+  "sharedMemory": {
+    "version": 1,
+    "byteLength": 288,
+    "int32Words": 72,
+    "headerWords": 8,
+    "slots": 2,
+    "slotWords": 32,
+    "magicHex": "0x4F504252",
+    "header": [
+      "magic",
+      "protocol",
+      "generation",
+      "activeSlot",
+      "publishedSeq",
+      "acknowledgedSeq",
+      "flags",
+      "workerState"
+    ],
+    "slotGuardIndex": 0,
+    "slotFields": [
+      {
+        "index": 1,
+        "key": "base_metalness",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 2,
+        "key": "specular_roughness",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 3,
+        "key": "specular_anisotropy",
+        "bounds": "verify-from-gui-before-code"
+      },
+      {
+        "index": 4,
+        "key": "coat_weight",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 5,
+        "key": "coat_roughness",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 6,
+        "key": "thin_film_weight",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 7,
+        "key": "thin_film_thickness",
+        "units": "from-source-no-unapproved-conversion"
+      },
+      {
+        "index": 8,
+        "key": "transmission_weight",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 9,
+        "key": "fuzz_weight",
+        "min": 0,
+        "max": 1
+      },
+      {
+        "index": 10,
+        "key": "skyPower",
+        "bounds": "verify-from-gui-before-code"
+      },
+      {
+        "index": 11,
+        "key": "sunPower",
+        "bounds": "verify-from-gui-before-code"
+      }
+    ],
+    "reservedSlotWordRange": [
+      12,
+      31
+    ],
+    "publisher": "single-main-thread",
+    "reader": "single-worker",
+    "payloadEncoding": "float32-bits-in-atomic-int32",
+    "atomicProtocol": "per-slot-odd-even-guard+published-active-slot-and-revision",
+    "maxReadRetries": 3,
+    "busyWaitForbidden": true,
+    "staleGenerationRejected": true
+  },
+  "security": {
+    "httpsRequiredForM2": true,
+    "coop": "same-origin",
+    "coep": "require-corp",
+    "headersProductionEnabled": false,
+    "resourceCorsCorpAuditRequired": true
+  },
+  "acceptance": {
+    "requiredMaterialPresets": [
+      "neutral",
+      "iridescent",
+      "metal",
+      "glass"
+    ],
+    "hardwareGpuRequired": true,
+    "mobileBrowserRequired": true,
+    "visualHumanReviewRequired": true,
+    "tests": {
+      "syntheticSABUpdates": 10000,
+      "minSampleTrials": 3,
+      "trialDurationSeconds": 30
+    },
+    "canMergeFromSpec": false
+  },
+  "failures": [
+    "stale_frame",
+    "context_loss",
+    "texture_target_error",
+    "torn_state",
+    "unhandled_worker_exception",
+    "double_renderer",
+    "raf_leak",
+    "silent_fallback",
+    "header_resource_block",
+    "image_provenance_missing",
+    "unapproved_production_change"
+  ]
+}
